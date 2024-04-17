@@ -1,0 +1,17 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "init",
+  "main": "main.js",
+  "scripts": {
+    "test": "test",
+    "start": "electron ."
+  },
+  "author": "Luke Campbell",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "music-metadata": "^7.14.0",
+    "wavesurfer.js": "^7.7.5"
+  }
+}

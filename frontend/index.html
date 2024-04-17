@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>[come up with name]</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <ul>
+            <!-- Directly call showTab for the Home tab -->
+            <li id="home-tab" class="tab-link" onclick="showTab(event, 'Home')">Home </li>
+            <li id="songs-tab" class="tab-link" onclick="showTab(event, 'Songs')">Songs </li>
+            <li id="playlist-tab" class="tab-link" onclick="showTab(event, 'Playlists')"> Playlists
+                <button id="playlist-btn" onclick="createPlaylist()">+</button>
+                <ul id="playlistList" class="playlist-content"></ul>
+            </li>
+            <li id="ratings-tab" class="tab-link">Ratings
+                <div id="rating-buttons-container" class="rating-buttons">
+                    <button id="album-rating-btn" onclick="showTab(event,'albumRatings')">Album Ratings</button>
+                    <button id="song-rating-btn" onclick="showTab(event,'songRatings')">Song Ratings</button>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id='main-content' class="content">
+        <div class="tab">
+            <button class="tablinks" data-tab="Instrumentals" onclick="showTab(event, 'Instrumentals'); loadInstrumentalSongs();">Instrumentals</button>
+            <button class="tablinks" data-tab="Vocals" onclick="showTab(event, 'Vocals'); loadVocalSongs();">Vocals</button>
+            <button class="tablinks" data-tab="Clean" onclick="showTab(event, 'Clean'); loadCleanSongs();">Clean</button>
+        </div>
+        <div id="Home" class="tabcontent" style="display: block;">
+            <h1>
+                welcome
+            </h1>
+            <p>
+                Here is a local music mananager that gives you the ability to pull the vocals and instrumentals of your songs, along with other features. <br>
+                When you downloaded this application a folder was created to handle songs.<br>
+                This folder is songs-mp3 in the audio-input folder.<br>
+                Add songs to this folder to play and utilize this app.
+            </p>
+            <img> <!-- ADD IMAGE OF FOLDER -->
+        </div>
+          
+        <div id="Instrumentals" class="tabcontent" style="display:none;">
+            <h1>
+                Here you can split songs into instrumentals.
+            </h1>
+            <a>"If you would like to extract the vocals of a song, select the song from the list. <br>
+                The vocals will be provided below to download so then it will update and appear in the songs list. <br>
+                From there you can add it to a playlist or any other reason"</a>
+            <div id="instrumentals-container">
+                <!-- instrumentals go here -->
+            </div>
+        </div>
+          
+        <div id="Vocals" class="tabcontent" style="display:none;">
+            <h1>
+                Here you can split songs into vocals.
+            </h1>
+            <a>"If you would like to extract the vocals of a song, select the song from the list. <br>
+                The vocals will be provided below to download so then it will update and appear in the songs list. <br>
+                From there you can add it to a playlist or any other reason"</a>
+            <div id="vocals-container">
+                <!-- vocals go here -->
+            </div>
+        </div>
+          
+        <div id="Clean" class="tabcontent" style="display:none;">
+            <h1>
+                Here you can create clean versions of songs
+            </h1>
+            <div id="clean-container">
+                <!-- clean songs go here -->
+            </div>
+        </div>
+          
+        <div id="Songs" class="tabcontent" style="display:none;">
+            <div id="songsContainer">
+                <!-- Songs content goes here -->
+              <div></div>
+            </div>
+        </div>
+        <div id="Playlists" class="tabcontent" style="display:none;">
+            <div id="playlistSongsContainer">
+              <!-- Songs in the playlist will go here -->
+            </div>
+            <div id="allSongsContainer">
+              <!-- All available songs will go here -->
+            </div>
+        </div>
+        <div id="Album-Art" class="tabcontent" style="display:none;">
+            <div id="albumSong" style="display: none; background-image: none; height: 100%;">
+                <!-- The Selected Song goes here -->
+            </div>
+        </div>   
+        <div id="albumRatings" class="tabcontent" style="display: none;">
+            <h1>Album Ratings</h1>
+            <div id="ratedAlbums">
+                <!-- songs that have been rated are displayed here -->
+            </div>
+        </div> 
+        <div id="songRatings" class="tabcontent" style="display: none;">
+            <h1>Song Ratings</h1>
+            <div id="ratedSongs">
+                <!-- songs that have been rated are displayed here -->
+            </div>
+            <div id="ratingSongs">
+                <!-- each song and their accompanying rating are displayed here -->
+            </div>
+        </div>       
+    </div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="music-player-bar">
+    <div class="now-playing" id="nowPlaying">
+        No song is playing
+        <audio id="audioPlayer"></audio>
+    </div>
+
+    <!-- Waveform container -->
+    <div id="waveformContainer" class="waveform-container"></div>
+
+    <div class="player-controls">
+        <button class="prev-button" onclick="previousSong()">&#9664;&#9664;</button>
+        <button class="play-button" onclick="playPauseSong()">&#9658;</button>
+        <button class="next-button" onclick="nextSong()">&#9654;&#9654;</button>
+        <div class="volume-control">
+            <input type="range" min="0" max="1" step="0.01" onchange="updateVolume(this.value)" />
+        </div>
+    </div>
+</div>
+
+<script src="renderer.js"></script> 
+<!--
+<script src="MenuManager.js"></script>
+<script src="Song.js"></script>
+<script src="Album.js"></script>
+<script src="Vocals.js"></script>
+<script src="Instrumentals.js"></script>
+<script src="RatingManager.js"></script>
+<script src="Playlist.js"></script>
+<script src="PlaylistManager.js"></script>
+<script src="PlaybackManager.js"></script>
+<script src="MenuManager.js"></script>
+<script src="AppController.js"></script>
+<script src="PlaybackManager.js"></script>
+<script src="BottomBar.js"></script>
+-->
+
+</body>
+</html>
