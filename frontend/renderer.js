@@ -14,6 +14,7 @@ let ratings = { value: 0 };
 let ratedSongs = [];    // Array to store rated songs
 let ratedAlbums = [];
 let playlists = [];
+let isPlaylistActive = false;
 
 /*
     This portion initializes the tabs and displays for html
@@ -64,6 +65,10 @@ function showTab(evt, tabName) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const playBtn = document.querySelector('.play-button');
+    const nextBtn = document.querySelector('.next-button');
+    const prevBtn = document.querySelector('.prev-button');
+
     showTab(null, 'Home');
     audioPlayer = document.getElementById('audioPlayer');
     setInterval(() => {
@@ -78,33 +83,49 @@ document.addEventListener('DOMContentLoaded', () => {
     tabButtons.forEach(btn => {
         btn.addEventListener('click', (event) => showTab(event, btn.getAttribute('data-tab')));
     });
+
+    console.log('Buttons:', { playBtn, nextBtn, prevBtn });  // Check if buttons are correctly selected
+
+    playBtn.addEventListener('click', playPauseSong);
+    nextBtn.addEventListener('click', () => {
+        if (isPlaylistActive) {
+            nextSongPlaylist();
+        } else {
+            nextSong();
+        }
+    });
+    prevBtn.addEventListener('click', () => {
+        if (isPlaylistActive) {
+            previousSongPlaylist();
+        } else {
+            previousSong();
+        }
+    });
 });
 
 function loadSongs() {
     // Ensure the DOM is fully loaded before trying to access elements
-    document.addEventListener('DOMContentLoaded', () => {
-        const songsContainer = document.getElementById('songsContainer');
+    const songsContainer = document.getElementById('songsContainer');
         
-        if (songsContainer) {
+    if (songsContainer) {
             // Check if the songs are already displayed
-            if (songsContainer.style.display === 'block') {
-                // If yes, hide them
-                songsContainer.style.display = 'none';
-            } else {
-                // If no, show them and request the songs if they haven't been loaded yet
-                songsContainer.style.display = 'block';
-                if (songsContainer.innerHTML.trim() === '') {
-                    ipcRenderer.send('get-songs');
-                }
-            }
-            // Ensure the "Songs" tab is activated
-            showTab(null, 'Songs');
+        if (songsContainer.style.display === 'block') {
+            // If yes, hide them
+            songsContainer.style.display = 'none';
         } else {
-            console.error('songsContainer element not found in the DOM');
+            // If no, show them and request the songs if they haven't been loaded yet
+            songsContainer.style.display = 'block';
+            if (songsContainer.innerHTML.trim() === '') {
+                ipcRenderer.send('get-songs');
+            }
         }
-    });
+            // Ensure the "Songs" tab is activated
+        showTab(null, 'Songs');
+    } else {
+        console.error('songsContainer element not found in the DOM');
+        ipcRenderer.send('get-songs');
+    }
 }
-
 
 ipcRenderer.on('get-songs-response', (event, receivedSongs) => {
     // Assume songsContainer exists in the main content area
@@ -126,10 +147,10 @@ ipcRenderer.on('get-songs-response', (event, receivedSongs) => {
         const songEntry = createSongEntry(song);
         songsContainer.appendChild(songEntry);
     });
-
-    // Optionally, show the songs tab by default
-    showTab(null, 'Songs');
+    
 });
+
+
 //  End of initialized portion
 
 
@@ -203,47 +224,40 @@ function createSongEntry(song) {
     // moreOptionsBtn.addEventListener('click', () => { /* Your code for more options */ });
     songDiv.appendChild(moreOptionsBtn);
     
-    playSong(song);
     
     return songDiv;
 }
 
 // this plays song objects
-function playSong(song) {
+function playSong(song, playlistId = null) {
     const songIndex = songs.findIndex(s => s === song);
     if (audioPlayer.src !== `../audio_input/songs-mp3/${song}`) {
-        // If the selected song is different from the currently playing song
         stopCurrentSong(); // Stop the currently playing song
         audioPlayer.src = `../audio_input/songs-mp3/${song}`; // Set the new song
         audioPlayer.load();
         currentSongIndex = songIndex; // Update the current song index
         isPlaying = true; // Set the new song as playing
         audioPlayer.play().then(() => {
-            // Playback success
-            updateNowPlaying(song);
+            updateNowPlaying(song); // Playback success
         }).catch(error => {
             console.error("Playback failed", error);
         });
     } else {
-        // If the selected song is the same as the currently playing song, just toggle play/pause
-        if (audioPlayer.paused) {
-            audioPlayer.play();
-            if (window.waveform) {
-                window.waveform.play();
-            }
-            isPlaying = true;
-        } else {
-            audioPlayer.pause();
-            if (window.waveform) {
-                window.waveform.pause();
-            }
-            isPlaying = false;
-        }
+        togglePlayPause(); // Handle play/pause if the song is already loaded
     }
 
-    // Update the play/pause button's appearance
+    if (playlistId) {
+        currentPlaylist = getPlaylistById(playlistId);
+        currentPlaylistIndex = currentPlaylist.songs.findIndex(s => s.name === song);
+        isPlaylistActive = true;
+    } else {
+        isPlaylistActive = false;
+    }
+
     updatePlayPauseButton();
 }
+
+
 
 // Function to stop the currently playing song
 function stopCurrentSong() {
@@ -282,56 +296,60 @@ function playSongPath(songPath) {
 }
 
 function playPauseSong() {
-    if (!audioPlayer.src) {
-        // If there's no song loaded yet, load the first song
-        if (songs.length > 0) {
-            loadSong(songs[0], 0); // Adjust this if the songs are managed differently
-        }
+    if (!isPlaying) {
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+        }).catch(error => {
+            console.error("Toggle play failed", error);
+        });
     } else {
-        if (!isPlaying) {
-            audioPlayer.play();
-            if (window.waveform) {
-                window.waveform.play();
-            }
-        } else {
-            audioPlayer.pause();
-            if (window.waveform) {
-                window.waveform.pause();
-            }
-        }
+        audioPlayer.pause();
+        isPlaying = false;
     }
+}
 
-    // Toggle the isPlaying variable based on the current playback state
-    isPlaying = !audioPlayer.paused && !audioPlayer.ended && audioPlayer.readyState > 2;
-
-    updatePlayPauseButton(); // Update the play/pause button's appearance
+function togglePlayPause() {
+    if (audioPlayer.paused) {
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+            updatePlayPauseButton();
+        });
+    } else {
+        audioPlayer.pause();
+        isPlaying = false;
+        updatePlayPauseButton();
+    }
 }
 
 function updatePlayPauseButton() {
-    const playButton = document.querySelector('.play-button');
+    const playBtn = document.querySelector('.play-button');
+    playBtn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9658;'; // Play or pause symbols
+}
 
-    if (isPlaying === true) {
-        playButton.textContent = 'Pause'; // Update to your application's pause icon or text
+
+function nextSong() {
+    if (isPlaylistActive) {
+        nextSongPlaylist();
     } else {
-        playButton.textContent = 'Play'; // Update to your application's play icon or text
+        currentSongIndex = (currentSongIndex + 1) % songs.length; // Loop to the start if at the end
+        loadSongIndex(songs[currentSongIndex], currentSongIndex);
     }
 }
 
-function nextSong() {
-    currentSongIndex = (currentSongIndex + 1) % songs.length; // Loop to the start if at the end
-    loadSong(songs[currentSongIndex], currentSongIndex);
-}
-
 function previousSong() {
-    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; // Loop to the end if at the start
-    loadSong(songs[currentSongIndex], currentSongIndex);
+    if (isPlaylistActive) {
+        nextSongPlaylist();
+    } else {
+        currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length; // Loop to the end if at the start
+        loadSongIndex(songs[currentSongIndex], currentSongIndex);
+    }
 }
 
 function updateVolume(value) {
     audioPlayer.volume = value;
 }
 
-function loadSong(songName, index) {
+function loadSongIndex(songName, index) {
     if (!audioPlayer) {
         audioPlayer = new Audio();
     }
@@ -344,16 +362,25 @@ function loadSong(songName, index) {
     });
 }
 
-function updateNowPlaying(songName) {
+function updateNowPlaying(song) {
     const nowPlaying = document.getElementById('nowPlaying');
-    nowPlaying.textContent = `Playing: ${songName}`;
+    if (isPlaylistActive) {
+        nowPlaying.textContent = `Playing from playlist: ${song}`;
+    } else {
+        nowPlaying.textContent = `Playing: ${song}`;
+    }
 }
+
 
 function updateNowPlayingPath(songPath) {
     const nowPlaying = document.getElementById('nowPlaying');
     const songName = extractSongName(songPath); // Extract the song name from the path
 
-    nowPlaying.textContent = `Playing: ${songName}`; // Use songName, not songPath
+    if (isPlaylistActive) {
+        nowPlaying.textContent = `Playing from playlist: ${songName}`;
+    } else {
+        nowPlaying.textContent = `Playing: ${songName}`;
+    }
 }
 
 
@@ -645,7 +672,6 @@ function separateSongToVocal(songName) {
 
 
 
-// In renderer.js
 window.getSongsForPlaylist = function(playlistId, callback) {
     ipcRenderer.send('get-songs', playlistId); // Request songs based on playlistId
     ipcRenderer.once('get-songs-response', (event, songs) => {
@@ -654,7 +680,6 @@ window.getSongsForPlaylist = function(playlistId, callback) {
         }
     });
 };
-
 
 // Function to display playlists
 function displayplaylists() {
@@ -729,7 +754,7 @@ function displayPlaylistSongs(playlist) {
             const playButton = document.createElement('button');
             playButton.textContent = 'Play';
             playButton.addEventListener('click', () => {
-                playSong(song.name); // Use song.name or the appropriate identifier for playSong
+                playSong(song.name, playlist.id); // Use song.name or the appropriate identifier for playSong
             });
             songDiv.appendChild(playButton);
 
@@ -766,6 +791,43 @@ function addSongToPlaylist(playlistId, song) {
     playlist.songs.push(song);
   }
 }
+
+function playPlaylistSong(songName, playlistId = null) {
+    if (playlistId) {
+        currentPlaylist = getPlaylistById(playlistId);
+        currentPlaylistIndex = currentPlaylist.songs.findIndex(s => s.name === songName);
+        isPlaylistActive = true;
+    }
+    audioPlayer.src = `../audio_input/songs-mp3/${songName}`;
+    audioPlayer.load();
+    audioPlayer.play().then(() => {
+        updateNowPlaying(songName);
+    }).catch(error => {
+        console.error("Playback failed", error);
+    });
+}
+
+
+function nextSongPlaylist() {
+    if (currentPlaylist && currentPlaylist.songs.length > 0) {
+        currentPlaylistIndex = (currentPlaylistIndex + 1) % currentPlaylist.songs.length;
+        playPlaylistSong(currentPlaylist.songs[currentPlaylistIndex].name, currentPlaylist.id);
+    } else {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        playPlaylistSong(songs[currentSongIndex], null);
+    }
+}
+
+function previousSongPlaylist() {
+    if (currentPlaylist && currentPlaylist.songs.length > 0) {
+        currentPlaylistIndex = (currentPlaylistIndex - 1 + currentPlaylist.songs.length) % currentPlaylist.songs.length;
+        playPlaylistSong(currentPlaylist.songs[currentPlaylistIndex].name, currentPlaylist.id);
+    } else {
+        currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+        playPlaylistSong(songs[currentSongIndex], null);
+    }
+}
+
 
 function getPlaylistById(playlistId) {
   return playlists.find(p => p.id === playlistId);
