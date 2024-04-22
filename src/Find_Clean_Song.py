@@ -2,6 +2,7 @@ from pytube import YouTube
 import os
 import sys
 
+# uses yt api to retrieve the clean song and download it
 def download_clean_version(song_name, output_path):
     from googleapiclient.discovery import build
     youtube = build('youtube', 'v3', developerKey='AIzaSyDF_gFQ0phuQ3ZpNgFTq_PIwfK7O29hyk8')

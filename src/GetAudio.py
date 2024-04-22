@@ -7,19 +7,8 @@ import noisereduce as nr
 from pydub import AudioSegment
 import soundfile as sf  # This library is typically used for writing files in librosa
 
-'''def process_song(input_path, output_path):
-    # Check if vocals.wav already exists
-    vocals_path = os.path.join(output_path, "vocals.wav")
-    if os.path.exists(vocals_path):
-        print(f"Vocals already exist: {vocals_path}")
-        return vocals_path
 
-    # Spleeter processing here
-    separator = Separator('spleeter:2stems')
-    separator.separate_to_file(input_path, output_path)
-    print(f"Processed: {vocals_path}")
-    return vocals_path'''
-
+# uses spleeter to seperate the audio file into 4 parts. The vocals are good as is, but the instrumental must be remade.
 def separate_audio(input_audio_path, output_directory):
     print(f"Input audio path: {input_audio_path}")
     print(f"Output directory: {output_directory}")
@@ -102,21 +91,3 @@ if __name__ == '__main__':
 
     # Call your function with validated paths
     vocals_path, instrumental_path = separate_audio(input_audio_path, output_directory)
-
-'''
-if __name__ == '__main__':
-    # Hard-coded paths for testing
-    input_audio_path = 'C:\\Users\\jcthi\Visual Studio Code\\YT - MP3\\audio_input\\songs-mp3\\SICKO MODE.mp3'  # Update this path
-    output_directory = 'C:\\Users\\jcthi\Visual Studio Code\\YT - MP3\\audio_input\\vocals_instrumentals'  # Update this path
-
-    # Ensure the hard-coded paths are directories that exist
-    if not os.path.isfile(input_audio_path):
-        print(f"Error: The file {input_audio_path} does not exist.")
-        sys.exit(1)
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-
-    # Call the function with the hard-coded paths
-    vocals_path, instrumental_path = separate_audio(input_audio_path, output_directory)
-    '''
-
